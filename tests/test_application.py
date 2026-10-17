@@ -1,12 +1,21 @@
 import pytest
+import requests
 
-from pyronaut.test import *
+from pyronaut.test import MicronautTest, micronaut_test_fixture
 
 @pytest.fixture
 def my_context(request):
-    fixture = micronaut_test_fixture(request, MicronautTest(environments=["test"], transactional=False))
+    fixture = micronaut_test_fixture(request, MicronautTest())
     yield fixture
     fixture.stop()
 
-def test_context(my_context):
-    assert my_context.isRunning()
+
+@pytest.fixture
+def client(my_context):
+    return requests.with_context(my_context)
+
+
+def test_index(client):
+    response = client.get("/")
+    assert response.status_code == 200
+    assert response.text == "Hello from Pyronaut"
